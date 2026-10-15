@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Haunted Game Night Bingo</title>
+  <meta name="description" content="A spooky 3x3 Halloween board game night bingo card." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #f6ead2;
+      --muted: #c9bda4;
+      --night: #0b1230;
+      --pumpkin: #f39a2b;
+      --ghost-yellow: #ffd84a;
+      --ghost-cyan: #43e6ff;
+      --ghost-green: #5ef05a;
+      --ghost-red: #ff4a52;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: 'Quicksand', system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--night);
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+    .bg {
+      position: fixed; inset: 0; z-index: -2;
+      background: url('/.netlify/images?url=/img/haunted-night.jpg&w=1080&fm=webp') center bottom / cover no-repeat, var(--night);
+    }
+    .bg::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(to bottom, rgba(6,10,30,.35) 0%, rgba(6,10,30,.1) 55%, rgba(6,10,30,.0) 100%);
+    }
+    main {
+      max-width: 520px; margin: 0 auto;
+      padding: max(20px, env(safe-area-inset-top)) 16px 48px;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    h1 {
+      font-family: 'Creepster', cursive; font-weight: 400;
+      font-size: clamp(2.6rem, 11vw, 3.8rem); line-height: .95; letter-spacing: .04em;
+      margin: 8px 0 0; text-align: center; color: var(--pumpkin);
+      text-shadow: 0 0 18px rgba(243,154,43,.55), 0 3px 0 #3a1500;
+    }
+    h1 small { display: block; font-size: .42em; color: var(--ink); letter-spacing: .12em; text-shadow: 0 0 10px rgba(255,255,255,.3); }
+    .player {
+      display: flex; align-items: center; gap: 8px;
+      font-size: .9rem; color: var(--muted);
+    }
+    .player input {
+      background: rgba(10,14,40,.6); border: 1px solid rgba(246,234,210,.25); color: var(--ink);
+      border-radius: 999px; padding: 6px 14px; font: inherit; font-weight: 700; width: 170px; text-align: center;
+    }
+    .player input:focus { outline: 2px solid var(--pumpkin); outline-offset: 2px; }
+    .card {
+      width: 100%;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+      padding: 12px; border-radius: 22px;
+      background: rgba(8,12,36,.45);
+      border: 1px solid rgba(246,234,210,.18);
+      backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+      box-shadow: 0 10px 40px rgba(0,0,0,.45);
+    }
+    .tile {
+      --glow: var(--ghost-yellow);
+      position: relative; aspect-ratio: 1; border-radius: 16px;
+      border: 2px dashed rgba(246,234,210,.35);
+      background: rgba(12,18,52,.72);
+      color: var(--ink); font: inherit; font-weight: 700;
+      font-size: clamp(.72rem, 3.3vw, .95rem); line-height: 1.2;
+      padding: 8px; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center;
+      transition: transform .15s ease, background .3s ease, border-color .3s ease, box-shadow .3s ease;
+    }
+    .tile:hover { transform: translateY(-2px); border-color: rgba(246,234,210,.7); }
+    .tile:focus-visible { outline: 3px solid var(--pumpkin); outline-offset: 2px; }
+    .tile .emoji { font-size: 1.6em; line-height: 1; }
+    .tile.center { border-style: solid; border-color: var(--pumpkin); background: rgba(70,28,4,.72); }
+    .tile.center .label::before { content: 'CENTRE'; display: block; font-size: .7em; letter-spacing: .15em; color: var(--pumpkin); margin-bottom: 2px; }
+    .tile.marked {
+      border-style: solid; border-color: var(--glow);
+      background: color-mix(in srgb, var(--glow) 32%, rgba(12,18,52,.85));
+      box-shadow: 0 0 18px color-mix(in srgb, var(--glow) 70%, transparent), inset 0 0 22px color-mix(in srgb, var(--glow) 35%, transparent);
+      cursor: default;
+    }
+    .tile.marked::after {
+      content: '👻'; position: absolute; top: 4px; right: 6px; font-size: .95rem;
+      animation: float 2.4s ease-in-out infinite;
+    }
+    .tile.win { animation: pulse 1s ease-in-out 3; }
+    @keyframes float { 50% { transform: translateY(-4px); } }
+    @keyframes pulse { 50% { transform: scale(1.06); } }
+    .status { text-align: center; font-weight: 600; min-height: 1.4em; text-shadow: 0 1px 4px #000; }
+    .status strong { color: var(--pumpkin); }
+    .hint { font-size: .82rem; color: var(--muted); text-align: center; max-width: 380px; text-shadow: 0 1px 4px #000; }
+    .hint a { color: var(--ghost-cyan); }
+
+    dialog {
+      border: 1px solid rgba(243,154,43,.6); border-radius: 20px; padding: 22px;
+      background: #141a3d; color: var(--ink); width: min(92vw, 360px);
+      box-shadow: 0 0 40px rgba(243,154,43,.35);
+    }
+    dialog::backdrop { background: rgba(3,5,18,.7); backdrop-filter: blur(2px); }
+    dialog h2 { font-family: 'Creepster', cursive; font-weight: 400; color: var(--pumpkin); margin: 0 0 6px; font-size: 1.8rem; letter-spacing: .04em; }
+    dialog p { margin: 0 0 14px; color: var(--muted); }
+    dialog input {
+      width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(246,234,210,.3);
+      background: #0b1030; color: var(--ink); font: inherit; font-size: 1rem;
+    }
+    dialog input:focus { outline: 2px solid var(--pumpkin); }
+    .err { color: var(--ghost-red); font-weight: 700; min-height: 1.3em; margin: 8px 0 0; font-size: .9rem; }
+    .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px; }
+    .btn {
+      font: inherit; font-weight: 700; border-radius: 999px; padding: 10px 18px; cursor: pointer; border: 0;
+    }
+    .btn.primary { background: var(--pumpkin); color: #2a1000; }
+    .btn.primary:disabled { opacity: .6; cursor: wait; }
+    .btn.ghost { background: transparent; color: var(--ink); border: 1px solid rgba(246,234,210,.3); }
+    .shake { animation: shake .35s; }
+    @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+    .banner {
+      position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 10;
+      opacity: 0; transition: opacity .4s;
+    }
+    .banner.show { opacity: 1; }
+    .banner span {
+      font-family: 'Creepster', cursive; font-size: clamp(4rem, 22vw, 8rem); color: var(--pumpkin);
+      text-shadow: 0 0 30px rgba(243,154,43,.9), 0 6px 0 #3a1500; transform: rotate(-6deg);
+    }
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <main>
+    <h1><small>Haunted Game Night</small>BINGO</h1>
+    <label class="player">Player
+      <input id="player" maxlength="24" placeholder="Your name" autocomplete="nickname" />
+    </label>
+    <div class="card" id="card" role="grid" aria-label="Bingo card"></div>
+    <p class="status" id="status" aria-live="polite"></p>
+    <p class="hint">Finish a challenge, then hand your phone to the gamemaster — they enter the secret password to light up your square. Every player gets their own shuffled card.</p>
+  </main>
+
+  <dialog id="gm">
+    <form method="dialog" id="gmForm">
+      <h2>Gamemaster check</h2>
+      <p id="gmTask"></p>
+      <input id="pw" type="password" placeholder="Gamemaster password" autocomplete="off" required />
+      <p class="err" id="err" aria-live="assertive"></p>
+      <div class="actions">
+        <button type="button" class="btn ghost" id="cancel">Cancel</button>
+        <button type="submit" class="btn primary" id="confirm">Mark it 🎃</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="banner" id="banner" aria-hidden="true"><span>BINGO!</span></div>
+
+  <script>
+    const CHALLENGES = [
+      { id: 'botc',    emoji: '🕰️', label: 'Play Blood on the Clocktower' },
+      { id: 'cards',   emoji: '🃏', label: 'Play a card game' },
+      { id: 'mahjong', emoji: '🀄', label: 'Play Riichi Mahjong' },
+      { id: 'photo',   emoji: '📸', label: 'Take a group pic' },
+      { id: 'magical', emoji: '🏃', label: 'Play Magical Athlete' },
+      { id: 'heavy',   emoji: '🧠', label: 'Play a heavy game' },
+      { id: 'costume', emoji: '🧙', label: 'Dress up in a costume' },
+      { id: 'insta',   emoji: '🎲', label: 'Follow Pair of Dice on Instagram' },
+    ];
+    const CENTER = { id: 'richeese', emoji: '🍗', label: 'Eat a meal from Richeese Factory' };
+    const GLOWS = ['var(--ghost-yellow)', 'var(--ghost-cyan)', 'var(--ghost-green)', 'var(--ghost-red)'];
+    const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    const KEY = 'haunted-bingo-v1';
+
+    // Each browser gets its own shuffled card, saved locally so it survives reloads.
+    function newCard() {
+      const order = CHALLENGES.map(c => c.id);
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1);
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      order.splice(4, 0, CENTER.id);
+      return { order, marked: [], player: '', bingoSeen: 0 };
+    }
+    function load() {
+      try {
+        const s = JSON.parse(localStorage.getItem(KEY));
+        if (s && Array.isArray(s.order) && s.order.length === 9) return s;
+      } catch {}
+      const s = newCard(); save(s); return s;
+    }
+    function save(s) { localStorage.setItem(KEY, JSON.stringify(s)); }
+
+    const state = load();
+    const byId = Object.fromEntries([...CHALLENGES, CENTER].map(c => [c.id, c]));
+    const cardEl = document.getElementById('card');
+    const statusEl = document.getElementById('status');
+    const playerEl = document.getElementById('player');
+    const dialog = document.getElementById('gm');
+    const pw = document.getElementById('pw');
+    const err = document.getElementById('err');
+    const confirmBtn = document.getElementById('confirm');
+    let pending = null;
+
+    playerEl.value = state.player || '';
+    playerEl.addEventListener('input', () => { state.player = playerEl.value; save(state); });
+
+    function completedLines() {
+      return LINES.filter(l => l.every(i => state.marked.includes(state.order[i])));
+    }
+
+    function render() {
+      cardEl.innerHTML = '';
+      const winCells = new Set(completedLines().flat());
+      state.order.forEach((id, i) => {
+        const c = byId[id];
+        const marked = state.marked.includes(id);
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tile' + (i === 4 ? ' center' : '') + (marked ? ' marked' : '') + (winCells.has(i) ? ' win' : '');
+        b.style.setProperty('--glow', GLOWS[i % GLOWS.length]);
+        b.setAttribute('role', 'gridcell');
+        b.setAttribute('aria-pressed', marked);
+        b.setAttribute('aria-label', c.label + (marked ? ' (done)' : ''));
+        b.innerHTML = `<span class="emoji" aria-hidden="true">${c.emoji}</span><span class="label">${c.label}</span>`;
+        if (!marked) b.addEventListener('click', () => openGm(id));
+        cardEl.appendChild(b);
+      });
+      const lines = completedLines().length;
+      const n = state.marked.length;
+      statusEl.innerHTML = n === 9
+        ? '<strong>Blackout!</strong> Every square haunted. 🦇'
+        : lines ? `<strong>${lines} BINGO${lines > 1 ? 's' : ''}!</strong> · ${n}/9 squares`
+        : `${n}/9 squares lit`;
+    }
+
+    function openGm(id) {
+      pending = id;
+      document.getElementById('gmTask').textContent = `“${byId[id].label}” — gamemaster, enter the password to confirm.`;
+      pw.value = ''; err.textContent = '';
+      dialog.showModal();
+      pw.focus();
+    }
+    document.getElementById('cancel').addEventListener('click', () => dialog.close());
+
+    document.getElementById('gmForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!pending) return;
+      confirmBtn.disabled = true; err.textContent = '';
+      try {
+        const res = await fetch('/api/verify', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw.value }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!data.ok) throw new Error('bad');
+        if (!state.marked.includes(pending)) state.marked.push(pending);
+        save(state);
+        dialog.close();
+        const lines = completedLines().length;
+        render();
+        if (lines > (state.bingoSeen || 0)) { celebrate(); state.bingoSeen = lines; save(state); }
+      } catch {
+        err.textContent = 'Wrong password, mortal. 💀';
+        dialog.classList.remove('shake'); void dialog.offsetWidth; dialog.classList.add('shake');
+        pw.select();
+      } finally {
+        confirmBtn.disabled = false;
+      }
+    });
+
+    function celebrate() {
+      const b = document.getElementById('banner');
+      b.classList.add('show');
+      setTimeout(() => b.classList.remove('show'), 1800);
+    }
+
+    render();
+  </script>
+</body>
+</html>

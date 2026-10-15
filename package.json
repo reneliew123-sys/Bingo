@@ -1,0 +1,8 @@
+{
+  "name": "halloween-boardgame-bingo",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@netlify/functions": "^4.0.0"
+  }
+}
